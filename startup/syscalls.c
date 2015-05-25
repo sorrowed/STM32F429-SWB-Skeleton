@@ -33,7 +33,6 @@ int _isatty( int file )
 
 int _read( int file, char *ptr, int len )
 {
-	//ITM_ReceiveChar();
 	errno = EBADF;
 	return -1;
 }

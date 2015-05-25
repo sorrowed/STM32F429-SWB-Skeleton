@@ -348,9 +348,9 @@
      through STLINK MCO pin of STM32F103 microcontroller. The frequency cannot be changed
      and is fixed at 8 MHz. 
      Hardware configuration needed for Nucleo Board:
-     – SB54, SB55 OFF
-     – R35 removed
-     – SB16, SB50 ON */
+     ï¿½ SB54, SB55 OFF
+     ï¿½ R35 removed
+     ï¿½ SB16, SB50 ON */
 /* #define USE_HSE_BYPASS */
 
 #if defined(USE_HSE_BYPASS)     
@@ -366,6 +366,7 @@
 /******************************************************************************/
 
 /************************* PLL Parameters *************************************/
+#ifndef PLL_M
 #if defined(STM32F40_41xxx) || defined(STM32F427_437xx) || defined(STM32F429_439xx) || defined(STM32F401xx)
 /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
 #define PLL_M      25
@@ -380,9 +381,12 @@
 #endif /* USE_HSE_BYPASS */
 
 #endif /* STM32F40_41xxx || STM32F427_437xx || STM32F429_439xx || STM32F401xx */  
+#endif
 
 /* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
+#ifndef PLL_Q
 #define PLL_Q      7
+#endif
 
 #if defined(STM32F446xx)
 /* PLL division factor for I2S, SAI, SYSTEM and SPDIF: Clock =  PLL_VCO / PLLR */
@@ -390,9 +394,13 @@
 #endif /* STM32F446xx */ 
 
 #if defined(STM32F40_41xxx) || defined(STM32F427_437xx) || defined(STM32F429_439xx) || defined(STM32F446xx)
+#ifndef PLL_N
 #define PLL_N      360
+#endif
+#ifndef PLL_P
 /* SYSCLK = PLL_VCO / PLL_P */
 #define PLL_P      2
+#endif
 #endif /* STM32F40_41xxx || STM32F427_437x || STM32F429_439xx || STM32F446xx */
 
 #if defined(STM32F401xx)

@@ -8,6 +8,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "stdbool.h"
+#include "stdio.h"
 
 #define Main_Task_PRIO    (tskIDLE_PRIORITY + 1)
 #define Main_Task_STACK   (configMINIMAL_STACK_SIZE)
