@@ -5,13 +5,34 @@
  *      Author: tom
  */
 
-#include "stm32f4xx.h"
-#include <stdbool.h>
+#include "FreeRTOS.h"
+#include "task.h"
+#include "stdbool.h"
 
-int main( void )
+#define Main_Task_PRIO    (tskIDLE_PRIORITY + 1)
+#define Main_Task_STACK   (configMINIMAL_STACK_SIZE)
+
+static xTaskHandle Task_Handle;
+static void Main_Task(void * parms);
+
+int main(void)
 {
-	while( true )
-		;
+	xTaskCreate(Main_Task, (signed char const* )"Main", Main_Task_STACK, NULL,
+			Main_Task_PRIO, &Task_Handle);
+
+	vTaskStartScheduler();
 
 	return -1;
+}
+
+void Main_Task(void * parms)
+{
+	while ( true)
+		vTaskDelay(10);
+}
+
+void vApplicationMallocFailedHook(void)
+{
+	while ( true)
+		;
 }
