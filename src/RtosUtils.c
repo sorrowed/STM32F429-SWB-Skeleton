@@ -5,19 +5,19 @@
  *      Author: tom
  */
 
-void vApplicationIdleHook(void)
+void vApplicationIdleHook( void )
 {
 }
 
-void vApplicationTickHook (void)
+void vApplicationTickHook( void )
 {
 }
 
-void StartIdleMonitor (void)
+void StartIdleMonitor( void )
 {
 }
 
-void EndIdleMonitor (void)
+void EndIdleMonitor( void )
 {
 
 }
