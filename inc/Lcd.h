@@ -171,10 +171,8 @@ typedef struct
 /** @defgroup STM32F429I_DISCOVERY_LCD_Exported_Functions
  * @{
  */
-void LcdDeInit( void );
+
 void LcdInit( void );
-void LcdLayerInit( void );
-void LcdChipSelect( FunctionalState NewState );
 void LcdSetLayer( uint32_t Layerx );
 void LcdSetColors( uint16_t _TextColor, uint16_t _BackColor );
 void LcdGetColors( uint16_t *_TextColor, uint16_t *_BackColor );
@@ -186,26 +184,25 @@ void LcdClear( uint16_t Color );
 uint32_t LcdSetCursor( uint16_t Xpos, uint16_t Ypos );
 void LcdSetColorKeying( uint32_t RGBValue );
 void LcdReSetColorKeying( void );
-void LcdDrawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c );
-void LcdDisplayChar( uint16_t Line, uint16_t Column, uint8_t Ascii );
+
 void LcdSetFont( sFONT *fonts );
 sFONT * LcdGetFont( void );
-void LcdDisplayString( uint16_t Line, char* ptr );
-void LcdSetDisplayWindow( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
-		uint16_t Width );
+
+void LcdDrawRawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c );
+void LcdDrawChar( uint16_t Line, uint16_t Column, uint8_t Ascii );
+void LcdDrawString( uint16_t Line, char* ptr );
+
+void LcdSetDisplayWindow( uint16_t Xpos, uint16_t Ypos, uint16_t Height, uint16_t Width );
 void LcdWindowModeDisable( void );
-void LcdDrawLine( uint16_t Xpos, uint16_t Ypos, uint16_t Length,
-		uint8_t Direction );
-void LcdDrawRect( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
-		uint16_t Width );
+void LcdDrawLine( uint16_t Xpos, uint16_t Ypos, uint16_t Length, uint8_t Direction );
+void LcdDrawRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height );
 void LcdDrawCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius );
 void LcdDrawEllipse( int Xpos, int Ypos, int Radius, int Radius2 );
 void LcdDrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 );
 void LcdDrawMonoPict( const uint32_t *Pict );
 void LcdWriteBMP( uint32_t BmpAddress );
 void LcdDrawUniLine( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2 );
-void LcdDrawFullRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width,
-		uint16_t Height );
+void LcdDrawFullRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height );
 void LcdDrawFullCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius );
 void LcdPolyLine( pPoint Points, uint16_t PointCount );
 void LcdPolyLineRelative( pPoint Points, uint16_t PointCount );
@@ -213,17 +210,12 @@ void LcdClosedPolyLine( pPoint Points, uint16_t PointCount );
 void LcdClosedPolyLineRelative( pPoint Points, uint16_t PointCount );
 void LcdFillPolyLine( pPoint Points, uint16_t PointCount );
 void LcdTriangle( pPoint Points, uint16_t PointCount );
-void LcdFillTriangle( uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1,
-		uint16_t y2, uint16_t y3 );
+void LcdFillTriangle( uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1, uint16_t y2, uint16_t y3 );
 void LcdWriteCommand( uint8_t LCD_Reg );
 void LcdWriteData( uint8_t value );
 void LcdPowerOn( void );
 void LcdDisplayOn( void );
 void LcdDisplayOff( void );
-void LcdCtrlLinesConfig( void );
-void LcdCtrlLinesWrite( GPIO_TypeDef* GPIOx, uint16_t CtrlPins,
-		BitAction BitVal );
-void LcdSpiConfig( void );
 
 #ifdef __cplusplus
 }

@@ -42,14 +42,10 @@ int main( void )
 {
 	LedInit();
 
-	xTaskCreate( TskMain, TskMainDesc, TskMainStack, NULL, TskMainPrio,
-			&TskMainHandle );
-	xTaskCreate( TskBlink, TskBlinkDesc, TskBlinkStack, NULL, TskBlinkPrio,
-			&TskBlinkHandle );
-	xTaskCreate( TskSdRam, TskSdRamDesc, TskSdRamStack, NULL, TskSdRamPrio,
-			&TskSdRamHandle );
-	xTaskCreate( TskLcd, TskLcdDesc, TskLcdStack, NULL, TskLcdPrio,
-			&TskLcdHandle );
+	xTaskCreate( TskMain, TskMainDesc, TskMainStack, NULL, TskMainPrio, &TskMainHandle );
+	xTaskCreate( TskBlink, TskBlinkDesc, TskBlinkStack, NULL, TskBlinkPrio, &TskBlinkHandle );
+	xTaskCreate( TskSdRam, TskSdRamDesc, TskSdRamStack, NULL, TskSdRamPrio, &TskSdRamHandle );
+	xTaskCreate( TskLcd, TskLcdDesc, TskLcdStack, NULL, TskLcdPrio, &TskLcdHandle );
 
 	vTaskStartScheduler();
 
@@ -68,8 +64,7 @@ void TskMain( void * parms )
 
 void TskLcd( void* parms )
 {
-	Point position =
-	{ 0, 0 };
+	Point position = { 0, 0 };
 
 	LcdInit();
 
@@ -84,10 +79,10 @@ void TskLcd( void* parms )
 	{
 		vTaskDelay( 1000 / portTICK_RATE_MS );
 
-		if( change % 10 == 0 )
+		if( change % 2 == 0 )
 		{
 			position.Y = ( (float) RNG_GetRandomNumber() / 0xFFFFFFFF ) * 13;
-			position.X = ( (float) RNG_GetRandomNumber() / 0xFFFFFFFF ) * 8;
+			position.X = ( (float) RNG_GetRandomNumber() / 0xFFFFFFFF ) * 5;
 		}
 		++change;
 
@@ -160,14 +155,17 @@ void OutputTime( const Point* position )
 
 	memset( buffer, ' ', position->X );
 
-	snprintf( buffer + position->X, 16-position->X, "%02i:%02i:%02i", RunningTimer.hours,
-			RunningTimer.minutes, RunningTimer.seconds );
+	snprintf( buffer + position->X, 16 - position->X, "%02i:%02i:%02i", RunningTimer.hours, RunningTimer.minutes,
+			RunningTimer.seconds );
 
 	if( p.X != position->X || p.Y != position->Y )
 		LcdClearLine( LCD_LINE( p.Y ) );
 	p = *position;
 
-	LcdDisplayString( LCD_LINE( p.Y ), buffer );
+	snprintf( buffer + position->X, 16 - position->X, "%s", "Rob is lief" );
+
+	LcdDrawString( LCD_LINE( p.Y ), buffer );
+	LcdDrawRect( 0, 0, 240 - 1, 320 - 1 );
 }
 
 void RunningTimerRun( RunningTimer_t* timer )

@@ -7,27 +7,22 @@
 #define ABS(X)  ((X) > 0 ? (X) : -(X))    
 
 static sFONT *LCD_Currentfonts;
-/* Global variables to set the written text color */
 static uint16_t CurrentTextColor = 0x0000;
 static uint16_t CurrentBackColor = 0xFFFF;
-/* Default LCD configuration with LCD Layer 1 */
 static uint32_t CurrentFrameBuffer = LCD_FRAME_BUFFER;
 static uint32_t CurrentLayer = LCD_BACKGROUND_LAYER;
-/**
- * @}
- */
-
-/** @defgroup STM32F429I_DISCOVERY_LCD_Private_FunctionPrototypes
- * @{
- */
-#ifndef USE_Delay
 static void delay( __IO uint32_t nCount );
-#endif /* USE_Delay*/
 
-static void PutPixel( int16_t x, int16_t y );
-static void LCD_PolyLineRelativeClosed( pPoint Points, uint16_t PointCount,
-		uint16_t Closed );
+static void LcdPutPixel( int16_t x, int16_t y );
+static void LcdPolyLineRelativeClosed( pPoint Points, uint16_t PointCount, uint16_t Closed );
 static void LcdGpioAfConfig( void );
+
+static void LcdDeInit( void );
+static void LcdLayerInit( void );
+static void LcdChipSelect( FunctionalState NewState );
+static void LcdCtrlLinesConfig( void );
+static void LcdCtrlLinesWrite( GPIO_TypeDef* GPIOx, uint16_t CtrlPins, BitAction BitVal );
+static void LcdSpiConfig( void );
 
 /**
  * @}
@@ -44,35 +39,29 @@ static void LcdGpioAfConfig( void );
  */
 void LcdDeInit( void )
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitTypeDef GpioCfg;
 
-	/* LCD Display Off */
 	LcdDisplayOff();
-
-	/* LCD_SPI disable */
 	SPI_Cmd( LCD_SPI, DISABLE );
-
-	/* LCD_SPI DeInit */
 	SPI_I2S_DeInit( LCD_SPI );
 
-	/* Disable SPI clock  */
 	RCC_APB2PeriphClockCmd( LCD_SPI_CLK, DISABLE );
 
 	/* Configure NCS in Output Push-Pull mode */
-	GPIO_InitStructure.GPIO_Pin = LCD_NCS_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( LCD_NCS_GPIO_PORT, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = LCD_NCS_PIN;
+	GpioCfg.GPIO_Mode = GPIO_Mode_IN;
+	GpioCfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( LCD_NCS_GPIO_PORT, &GpioCfg );
 
 	/* Configure SPI pins: SCK, MISO and MOSI */
-	GPIO_InitStructure.GPIO_Pin = LCD_SPI_SCK_PIN;
-	GPIO_Init( LCD_SPI_SCK_GPIO_PORT, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = LCD_SPI_SCK_PIN;
+	GPIO_Init( LCD_SPI_SCK_GPIO_PORT, &GpioCfg );
 
-	GPIO_InitStructure.GPIO_Pin = LCD_SPI_MISO_PIN;
-	GPIO_Init( LCD_SPI_MISO_GPIO_PORT, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = LCD_SPI_MISO_PIN;
+	GPIO_Init( LCD_SPI_MISO_GPIO_PORT, &GpioCfg );
 
-	GPIO_InitStructure.GPIO_Pin = LCD_SPI_MOSI_PIN;
-	GPIO_Init( LCD_SPI_MOSI_GPIO_PORT, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = LCD_SPI_MOSI_PIN;
+	GPIO_Init( LCD_SPI_MOSI_GPIO_PORT, &GpioCfg );
 
 	/* GPIOA configuration */
 	GPIO_PinAFConfig( GPIOA, GPIO_PinSource3, GPIO_AF_MCO );
@@ -81,13 +70,12 @@ void LcdDeInit( void )
 	GPIO_PinAFConfig( GPIOA, GPIO_PinSource11, GPIO_AF_MCO );
 	GPIO_PinAFConfig( GPIOA, GPIO_PinSource12, GPIO_AF_MCO );
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_6
-			| GPIO_Pin_11 | GPIO_Pin_12;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOA, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_6 | GPIO_Pin_11 | GPIO_Pin_12;
+	GpioCfg.GPIO_Mode = GPIO_Mode_AF;
+	GpioCfg.GPIO_Speed = GPIO_Speed_50MHz;
+	GpioCfg.GPIO_OType = GPIO_OType_PP;
+	GpioCfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( GPIOA, &GpioCfg );
 
 	/* GPIOB configuration */
 	GPIO_PinAFConfig( GPIOB, GPIO_PinSource0, GPIO_AF_MCO );
@@ -97,46 +85,45 @@ void LcdDeInit( void )
 	GPIO_PinAFConfig( GPIOB, GPIO_PinSource10, GPIO_AF_MCO );
 	GPIO_PinAFConfig( GPIOB, GPIO_PinSource11, GPIO_AF_MCO );
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_8
-			| GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOB, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11;
+	GpioCfg.GPIO_Mode = GPIO_Mode_AF;
+	GpioCfg.GPIO_Speed = GPIO_Speed_50MHz;
+	GpioCfg.GPIO_OType = GPIO_OType_PP;
+	GpioCfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( GPIOB, &GpioCfg );
 
 	/* GPIOC configuration */
 	GPIO_PinAFConfig( GPIOC, GPIO_PinSource6, GPIO_AF_MCO );
 	GPIO_PinAFConfig( GPIOC, GPIO_PinSource7, GPIO_AF_MCO );
 	GPIO_PinAFConfig( GPIOC, GPIO_PinSource10, GPIO_AF_MCO );
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_10;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOC, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_10;
+	GpioCfg.GPIO_Mode = GPIO_Mode_AF;
+	GpioCfg.GPIO_Speed = GPIO_Speed_50MHz;
+	GpioCfg.GPIO_OType = GPIO_OType_PP;
+	GpioCfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( GPIOC, &GpioCfg );
 
 	/* GPIOD configuration */
 	GPIO_PinAFConfig( GPIOD, GPIO_PinSource3, GPIO_AF_MCO );
 	GPIO_PinAFConfig( GPIOD, GPIO_PinSource6, GPIO_AF_MCO );
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_6;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOD, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_6;
+	GpioCfg.GPIO_Mode = GPIO_Mode_AF;
+	GpioCfg.GPIO_Speed = GPIO_Speed_50MHz;
+	GpioCfg.GPIO_OType = GPIO_OType_PP;
+	GpioCfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( GPIOD, &GpioCfg );
 
 	/* GPIOF configuration */
 	GPIO_PinAFConfig( GPIOF, GPIO_PinSource10, GPIO_AF_MCO );
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOF, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = GPIO_Pin_10;
+	GpioCfg.GPIO_Mode = GPIO_Mode_AF;
+	GpioCfg.GPIO_Speed = GPIO_Speed_50MHz;
+	GpioCfg.GPIO_OType = GPIO_OType_PP;
+	GpioCfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( GPIOF, &GpioCfg );
 
 	/* GPIOG configuration */
 	GPIO_PinAFConfig( GPIOG, GPIO_PinSource6, GPIO_AF_MCO );
@@ -145,13 +132,12 @@ void LcdDeInit( void )
 	GPIO_PinAFConfig( GPIOG, GPIO_PinSource11, GPIO_AF_MCO );
 	GPIO_PinAFConfig( GPIOG, GPIO_PinSource12, GPIO_AF_MCO );
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_10
-			| GPIO_Pin_11 | GPIO_Pin_12;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOG, &GPIO_InitStructure );
+	GpioCfg.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
+	GpioCfg.GPIO_Mode = GPIO_Mode_AF;
+	GpioCfg.GPIO_Speed = GPIO_Speed_50MHz;
+	GpioCfg.GPIO_OType = GPIO_OType_PP;
+	GpioCfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( GPIOG, &GpioCfg );
 }
 
 /**
@@ -462,11 +448,10 @@ void LcdClearLine( uint16_t Line )
 	uint16_t refcolumn = 0;
 	/* Send the string character by character on lCD */
 	while( ( refcolumn < LCD_PIXEL_WIDTH )
-			&& ( ( ( refcolumn + LCD_Currentfonts->Width ) & 0xFFFF )
-					>= LCD_Currentfonts->Width ) )
+			&& ( ( ( refcolumn + LCD_Currentfonts->Width ) & 0xFFFF ) >= LCD_Currentfonts->Width ) )
 	{
 		/* Display one character on LCD */
-		LcdDisplayChar( Line, refcolumn, ' ' );
+		LcdDrawChar( Line, refcolumn, ' ' );
 		/* Decrement the column position by 16 */
 		refcolumn += LCD_Currentfonts->Width;
 	}
@@ -510,23 +495,19 @@ void LcdSetColorKeying( uint32_t RGBValue )
 
 	/* configure the color Keying */
 	LTDC_colorkeying_InitStruct.LTDC_ColorKeyBlue = 0x0000FF & RGBValue;
-	LTDC_colorkeying_InitStruct.LTDC_ColorKeyGreen = ( 0x00FF00 & RGBValue )
-			>> 8;
-	LTDC_colorkeying_InitStruct.LTDC_ColorKeyRed = ( 0xFF0000 & RGBValue )
-			>> 16;
+	LTDC_colorkeying_InitStruct.LTDC_ColorKeyGreen = ( 0x00FF00 & RGBValue ) >> 8;
+	LTDC_colorkeying_InitStruct.LTDC_ColorKeyRed = ( 0xFF0000 & RGBValue ) >> 16;
 
 	if( CurrentLayer == LCD_BACKGROUND_LAYER )
 	{
 		/* Enable the color Keying for Layer1 */
-		LTDC_ColorKeyingConfig( LTDC_Layer1, &LTDC_colorkeying_InitStruct,
-				ENABLE );
+		LTDC_ColorKeyingConfig( LTDC_Layer1, &LTDC_colorkeying_InitStruct, ENABLE );
 		LTDC_ReloadConfig( LTDC_IMReload );
 	}
 	else
 	{
 		/* Enable the color Keying for Layer2 */
-		LTDC_ColorKeyingConfig( LTDC_Layer2, &LTDC_colorkeying_InitStruct,
-				ENABLE );
+		LTDC_ColorKeyingConfig( LTDC_Layer2, &LTDC_colorkeying_InitStruct, ENABLE );
 		LTDC_ReloadConfig( LTDC_IMReload );
 	}
 }
@@ -543,15 +524,13 @@ void LcdReSetColorKeying( void )
 	if( CurrentLayer == LCD_BACKGROUND_LAYER )
 	{
 		/* Disable the color Keying for Layer1 */
-		LTDC_ColorKeyingConfig( LTDC_Layer1, &LTDC_colorkeying_InitStruct,
-				DISABLE );
+		LTDC_ColorKeyingConfig( LTDC_Layer1, &LTDC_colorkeying_InitStruct, DISABLE );
 		LTDC_ReloadConfig( LTDC_IMReload );
 	}
 	else
 	{
 		/* Disable the color Keying for Layer2 */
-		LTDC_ColorKeyingConfig( LTDC_Layer2, &LTDC_colorkeying_InitStruct,
-				DISABLE );
+		LTDC_ColorKeyingConfig( LTDC_Layer2, &LTDC_colorkeying_InitStruct, DISABLE );
 		LTDC_ReloadConfig( LTDC_IMReload );
 	}
 }
@@ -563,7 +542,7 @@ void LcdReSetColorKeying( void )
  * @param  c: pointer to the character data.
  * @retval None
  */
-void LcdDrawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c )
+void LcdDrawRawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c )
 {
 	uint32_t index = 0, counter = 0, xpos = 0;
 	uint32_t Xaddress = 0;
@@ -577,22 +556,17 @@ void LcdDrawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c )
 		for( counter = 0; counter < LCD_Currentfonts->Width; counter++ )
 		{
 
-			if( ( ( ( c[index]
-					& ( ( 0x80 << ( ( LCD_Currentfonts->Width / 12 ) * 8 ) )
-							>> counter ) ) == 0x00 )
+			if( ( ( ( c[index] & ( ( 0x80 << ( ( LCD_Currentfonts->Width / 12 ) * 8 ) ) >> counter ) ) == 0x00 )
 					&& ( LCD_Currentfonts->Width <= 12 ) )
-					|| ( ( ( c[index] & ( 0x1 << counter ) ) == 0x00 )
-							&& ( LCD_Currentfonts->Width > 12 ) ) )
+					|| ( ( ( c[index] & ( 0x1 << counter ) ) == 0x00 ) && ( LCD_Currentfonts->Width > 12 ) ) )
 			{
 				/* Write data value to all SDRAM memory */
-				*(__IO uint16_t*) ( CurrentFrameBuffer + ( 2 * Xaddress ) + xpos ) =
-						CurrentBackColor;
+				*(__IO uint16_t*) ( CurrentFrameBuffer + ( 2 * Xaddress ) + xpos ) = CurrentBackColor;
 			}
 			else
 			{
 				/* Write data value to all SDRAM memory */
-				*(__IO uint16_t*) ( CurrentFrameBuffer + ( 2 * Xaddress ) + xpos ) =
-						CurrentTextColor;
+				*(__IO uint16_t*) ( CurrentFrameBuffer + ( 2 * Xaddress ) + xpos ) = CurrentTextColor;
 			}
 			Xaddress++;
 		}
@@ -609,12 +583,11 @@ void LcdDrawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c )
  * @param  Ascii: character ascii code, must be between 0x20 and 0x7E.
  * @retval None
  */
-void LcdDisplayChar( uint16_t Line, uint16_t Column, uint8_t Ascii )
+void LcdDrawChar( uint16_t Line, uint16_t Column, uint8_t Ascii )
 {
 	Ascii -= 32;
 
-	LcdDrawChar( Line, Column,
-			&LCD_Currentfonts->table[Ascii * LCD_Currentfonts->Height] );
+	LcdDrawRawChar( Line, Column, &LCD_Currentfonts->table[Ascii * LCD_Currentfonts->Height] );
 }
 
 /**
@@ -625,17 +598,15 @@ void LcdDisplayChar( uint16_t Line, uint16_t Column, uint8_t Ascii )
  * @param  *ptr: pointer to string to display on LCD.
  * @retval None
  */
-void LcdDisplayString( uint16_t Line, char *ptr )
+void LcdDrawString( uint16_t Line, char *ptr )
 {
 	uint16_t refcolumn = 0;
 	/* Send the string character by character on lCD */
 	while( ( refcolumn < LCD_PIXEL_WIDTH )
-			&& ( ( *ptr != 0 )
-					& ( ( ( refcolumn + LCD_Currentfonts->Width ) & 0xFFFF )
-							>= LCD_Currentfonts->Width ) ) )
+			&& ( ( *ptr != 0 ) & ( ( ( refcolumn + LCD_Currentfonts->Width ) & 0xFFFF ) >= LCD_Currentfonts->Width ) ) )
 	{
 		/* Display one character on LCD */
-		LcdDisplayChar( Line, refcolumn, *ptr );
+		LcdDrawChar( Line, refcolumn, *ptr );
 		/* Decrement the column position by width */
 		refcolumn += LCD_Currentfonts->Width;
 		/* Point on the next character */
@@ -651,8 +622,7 @@ void LcdDisplayString( uint16_t Line, char *ptr )
  * @param  Width: display window width, can be a value from 0 to 240.
  * @retval None
  */
-void LcdSetDisplayWindow( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
-		uint16_t Width )
+void LcdSetDisplayWindow( uint16_t Xpos, uint16_t Ypos, uint16_t Height, uint16_t Width )
 {
 
 	if( CurrentLayer == LCD_BACKGROUND_LAYER )
@@ -696,8 +666,7 @@ void LcdWindowModeDisable( void )
  *   This parameter can be one of the following values: LCD_DIR_HORIZONTAL or LCD_DIR_VERTICAL.
  * @retval None
  */
-void LcdDrawLine( uint16_t Xpos, uint16_t Ypos, uint16_t Length,
-		uint8_t Direction )
+void LcdDrawLine( uint16_t Xpos, uint16_t Ypos, uint16_t Length, uint8_t Direction )
 {
 	DMA2D_InitTypeDef DMA2D_InitStruct;
 
@@ -747,12 +716,11 @@ void LcdDrawLine( uint16_t Xpos, uint16_t Ypos, uint16_t Length,
  * @brief  Displays a rectangle.
  * @param  Xpos: specifies the X position, can be a value from 0 to 240.
  * @param  Ypos: specifies the Y position, can be a value from 0 to 320.
- * @param  Height: display rectangle height, can be a value from 0 to 320.
  * @param  Width: display rectangle width, can be a value from 0 to 240.
+ * @param  Height: display rectangle height, can be a value from 0 to 320.
  * @retval None
  */
-void LcdDrawRect( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
-		uint16_t Width )
+void LcdDrawRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height )
 {
 	/* draw horizontal lines */
 	LcdDrawLine( Xpos, Ypos, Width, LCD_DIR_HORIZONTAL );
@@ -775,17 +743,13 @@ void LcdDrawCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
 	int x = -Radius, y = 0, err = 2 - 2 * Radius, e2;
 	do
 	{
-		*(__IO uint16_t*) ( CurrentFrameBuffer
-				+ ( 2 * ( ( Xpos - x ) + LCD_PIXEL_WIDTH * ( Ypos + y ) ) ) ) =
+		*(__IO uint16_t*) ( CurrentFrameBuffer + ( 2 * ( ( Xpos - x ) + LCD_PIXEL_WIDTH * ( Ypos + y ) ) ) ) =
 				CurrentTextColor;
-		*(__IO uint16_t*) ( CurrentFrameBuffer
-				+ ( 2 * ( ( Xpos + x ) + LCD_PIXEL_WIDTH * ( Ypos + y ) ) ) ) =
+		*(__IO uint16_t*) ( CurrentFrameBuffer + ( 2 * ( ( Xpos + x ) + LCD_PIXEL_WIDTH * ( Ypos + y ) ) ) ) =
 				CurrentTextColor;
-		*(__IO uint16_t*) ( CurrentFrameBuffer
-				+ ( 2 * ( ( Xpos + x ) + LCD_PIXEL_WIDTH * ( Ypos - y ) ) ) ) =
+		*(__IO uint16_t*) ( CurrentFrameBuffer + ( 2 * ( ( Xpos + x ) + LCD_PIXEL_WIDTH * ( Ypos - y ) ) ) ) =
 				CurrentTextColor;
-		*(__IO uint16_t*) ( CurrentFrameBuffer
-				+ ( 2 * ( ( Xpos - x ) + LCD_PIXEL_WIDTH * ( Ypos - y ) ) ) ) =
+		*(__IO uint16_t*) ( CurrentFrameBuffer + ( 2 * ( ( Xpos - x ) + LCD_PIXEL_WIDTH * ( Ypos - y ) ) ) ) =
 				CurrentTextColor;
 
 		e2 = err;
@@ -821,10 +785,10 @@ void LcdDrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 		do
 		{
 			K = (float) ( rad1 / rad2 );
-			LcdDrawLine( ( Xpos + x ), ( Ypos - (uint16_t) ( y / K ) ),
-					( 2 * (uint16_t) ( y / K ) + 1 ), LCD_DIR_VERTICAL );
-			LcdDrawLine( ( Xpos - x ), ( Ypos - (uint16_t) ( y / K ) ),
-					( 2 * (uint16_t) ( y / K ) + 1 ), LCD_DIR_VERTICAL );
+			LcdDrawLine( ( Xpos + x ), ( Ypos - (uint16_t) ( y / K ) ), ( 2 * (uint16_t) ( y / K ) + 1 ),
+					LCD_DIR_VERTICAL );
+			LcdDrawLine( ( Xpos - x ), ( Ypos - (uint16_t) ( y / K ) ), ( 2 * (uint16_t) ( y / K ) + 1 ),
+					LCD_DIR_VERTICAL );
 
 			e2 = err;
 			if( e2 <= y )
@@ -845,10 +809,10 @@ void LcdDrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 		do
 		{
 			K = (float) ( rad2 / rad1 );
-			LcdDrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos + y ),
-					( 2 * (uint16_t) ( x / K ) + 1 ), LCD_DIR_HORIZONTAL );
-			LcdDrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos - y ),
-					( 2 * (uint16_t) ( x / K ) + 1 ), LCD_DIR_HORIZONTAL );
+			LcdDrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos + y ), ( 2 * (uint16_t) ( x / K ) + 1 ),
+					LCD_DIR_HORIZONTAL );
+			LcdDrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos - y ), ( 2 * (uint16_t) ( x / K ) + 1 ),
+					LCD_DIR_HORIZONTAL );
 
 			e2 = err;
 			if( e2 <= x )
@@ -885,29 +849,13 @@ void LcdDrawEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 		{
 			K = (float) ( rad1 / rad2 );
 			*(__IO uint16_t*) ( CurrentFrameBuffer
-					+ ( 2
-							* ( ( Xpos - x )
-									+ LCD_PIXEL_WIDTH
-											* ( Ypos + (uint16_t) ( y / K ) ) ) ) ) =
-					CurrentTextColor;
+					+ ( 2 * ( ( Xpos - x ) + LCD_PIXEL_WIDTH * ( Ypos + (uint16_t) ( y / K ) ) ) ) ) = CurrentTextColor;
 			*(__IO uint16_t*) ( CurrentFrameBuffer
-					+ ( 2
-							* ( ( Xpos + x )
-									+ LCD_PIXEL_WIDTH
-											* ( Ypos + (uint16_t) ( y / K ) ) ) ) ) =
-					CurrentTextColor;
+					+ ( 2 * ( ( Xpos + x ) + LCD_PIXEL_WIDTH * ( Ypos + (uint16_t) ( y / K ) ) ) ) ) = CurrentTextColor;
 			*(__IO uint16_t*) ( CurrentFrameBuffer
-					+ ( 2
-							* ( ( Xpos + x )
-									+ LCD_PIXEL_WIDTH
-											* ( Ypos - (uint16_t) ( y / K ) ) ) ) ) =
-					CurrentTextColor;
+					+ ( 2 * ( ( Xpos + x ) + LCD_PIXEL_WIDTH * ( Ypos - (uint16_t) ( y / K ) ) ) ) ) = CurrentTextColor;
 			*(__IO uint16_t*) ( CurrentFrameBuffer
-					+ ( 2
-							* ( ( Xpos - x )
-									+ LCD_PIXEL_WIDTH
-											* ( Ypos - (uint16_t) ( y / K ) ) ) ) ) =
-					CurrentTextColor;
+					+ ( 2 * ( ( Xpos - x ) + LCD_PIXEL_WIDTH * ( Ypos - (uint16_t) ( y / K ) ) ) ) ) = CurrentTextColor;
 
 			e2 = err;
 			if( e2 <= y )
@@ -928,25 +876,13 @@ void LcdDrawEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 		{
 			K = (float) ( rad2 / rad1 );
 			*(__IO uint16_t*) ( CurrentFrameBuffer
-					+ ( 2
-							* ( ( Xpos - (uint16_t) ( x / K ) )
-									+ LCD_PIXEL_WIDTH * ( Ypos + y ) ) ) ) =
-					CurrentTextColor;
+					+ ( 2 * ( ( Xpos - (uint16_t) ( x / K ) ) + LCD_PIXEL_WIDTH * ( Ypos + y ) ) ) ) = CurrentTextColor;
 			*(__IO uint16_t*) ( CurrentFrameBuffer
-					+ ( 2
-							* ( ( Xpos + (uint16_t) ( x / K ) )
-									+ LCD_PIXEL_WIDTH * ( Ypos + y ) ) ) ) =
-					CurrentTextColor;
+					+ ( 2 * ( ( Xpos + (uint16_t) ( x / K ) ) + LCD_PIXEL_WIDTH * ( Ypos + y ) ) ) ) = CurrentTextColor;
 			*(__IO uint16_t*) ( CurrentFrameBuffer
-					+ ( 2
-							* ( ( Xpos + (uint16_t) ( x / K ) )
-									+ LCD_PIXEL_WIDTH * ( Ypos - y ) ) ) ) =
-					CurrentTextColor;
+					+ ( 2 * ( ( Xpos + (uint16_t) ( x / K ) ) + LCD_PIXEL_WIDTH * ( Ypos - y ) ) ) ) = CurrentTextColor;
 			*(__IO uint16_t*) ( CurrentFrameBuffer
-					+ ( 2
-							* ( ( Xpos - (uint16_t) ( x / K ) )
-									+ LCD_PIXEL_WIDTH * ( Ypos - y ) ) ) ) =
-					CurrentTextColor;
+					+ ( 2 * ( ( Xpos - (uint16_t) ( x / K ) ) + LCD_PIXEL_WIDTH * ( Ypos - y ) ) ) ) = CurrentTextColor;
 
 			e2 = err;
 			if( e2 <= x )
@@ -1103,8 +1039,7 @@ void LcdWriteBMP( uint32_t BmpAddress )
  * @param  Width: rectangle width.
  * @retval None
  */
-void LcdDrawFullRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width,
-		uint16_t Height )
+void LcdDrawFullRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height )
 {
 	DMA2D_InitTypeDef DMA2D_InitStruct;
 
@@ -1202,9 +1137,8 @@ void LcdDrawFullCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
  */
 void LcdDrawUniLine( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2 )
 {
-	int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 =
-			0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0,
-			curpixel = 0;
+	int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0, den = 0, num = 0, numadd =
+			0, numpixels = 0, curpixel = 0;
 
 	deltax = ABS( x2 - x1 ); /* The difference between the x's */
 	deltay = ABS( y2 - y1 ); /* The difference between the y's */
@@ -1254,7 +1188,7 @@ void LcdDrawUniLine( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2 )
 
 	for( curpixel = 0; curpixel <= numpixels; curpixel++ )
 	{
-		PutPixel( x, y ); /* Draw the current pixel */
+		LcdPutPixel( x, y ); /* Draw the current pixel */
 		num += numadd; /* Increase the numerator by the top of the fraction */
 		if( num >= den ) /* Check if numerator >= denominator */
 		{
@@ -1298,13 +1232,11 @@ void LcdTriangle( pPoint Points, uint16_t PointCount )
  * @param  y1..3: y position of triangle point 1..3.
  * @retval None
  */
-void LcdFillTriangle( uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1,
-		uint16_t y2, uint16_t y3 )
+void LcdFillTriangle( uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1, uint16_t y2, uint16_t y3 )
 {
 
-	int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 =
-			0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0,
-			curpixel = 0;
+	int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0, den = 0, num = 0, numadd =
+			0, numpixels = 0, curpixel = 0;
 
 	deltax = ABS( x2 - x1 ); /* The difference between the x's */
 	deltay = ABS( y2 - y1 ); /* The difference between the y's */
@@ -1400,8 +1332,7 @@ void LcdPolyLine( pPoint Points, uint16_t PointCount )
  *           1: closed, 0 : not closed.
  * @retval None
  */
-static void LCD_PolyLineRelativeClosed( pPoint Points, uint16_t PointCount,
-		uint16_t Closed )
+static void LcdPolyLineRelativeClosed( pPoint Points, uint16_t PointCount, uint16_t Closed )
 {
 	int16_t X = 0, Y = 0;
 	pPoint First = Points;
@@ -1434,8 +1365,7 @@ static void LCD_PolyLineRelativeClosed( pPoint Points, uint16_t PointCount,
 void LcdClosedPolyLine( pPoint Points, uint16_t PointCount )
 {
 	LcdPolyLine( Points, PointCount );
-	LcdDrawUniLine( Points->X, Points->Y, ( Points + PointCount - 1 )->X,
-			( Points + PointCount - 1 )->Y );
+	LcdDrawUniLine( Points->X, Points->Y, ( Points + PointCount - 1 )->X, ( Points + PointCount - 1 )->Y );
 }
 
 /**
@@ -1446,7 +1376,7 @@ void LcdClosedPolyLine( pPoint Points, uint16_t PointCount )
  */
 void LcdPolyLineRelative( pPoint Points, uint16_t PointCount )
 {
-	LCD_PolyLineRelativeClosed( Points, PointCount, 0 );
+	LcdPolyLineRelativeClosed( Points, PointCount, 0 );
 }
 
 /**
@@ -1457,7 +1387,7 @@ void LcdPolyLineRelative( pPoint Points, uint16_t PointCount )
  */
 void LcdClosedPolyLineRelative( pPoint Points, uint16_t PointCount )
 {
-	LCD_PolyLineRelativeClosed( Points, PointCount, 1 );
+	LcdPolyLineRelativeClosed( Points, PointCount, 1 );
 }
 
 /**
@@ -1469,8 +1399,8 @@ void LcdClosedPolyLineRelative( pPoint Points, uint16_t PointCount )
 void LcdFillPolyLine( pPoint Points, uint16_t PointCount )
 {
 
-	int16_t X = 0, Y = 0, X2 = 0, Y2 = 0, X_center = 0, Y_center = 0, X_first =
-			0, Y_first = 0, pixelX = 0, pixelY = 0, counter = 0;
+	int16_t X = 0, Y = 0, X2 = 0, Y2 = 0, X_center = 0, Y_center = 0, X_first = 0, Y_first = 0, pixelX = 0, pixelY = 0,
+			counter = 0;
 	uint16_t IMAGE_LEFT = 0, IMAGE_RIGHT = 0, IMAGE_TOP = 0, IMAGE_BOTTOM = 0;
 
 	IMAGE_LEFT = IMAGE_RIGHT = Points->X;
@@ -1769,8 +1699,7 @@ void LcdCtrlLinesConfig( void )
  *     @arg Bit_SET: to set the port pin
  * @retval None
  */
-void LcdCtrlLinesWrite( GPIO_TypeDef* GPIOx, uint16_t CtrlPins,
-		BitAction BitVal )
+void LcdCtrlLinesWrite( GPIO_TypeDef* GPIOx, uint16_t CtrlPins, BitAction BitVal )
 {
 	/* Set or Reset the control line */
 	GPIO_WriteBit( GPIOx, (uint16_t) CtrlPins, (BitAction) BitVal );
@@ -1788,8 +1717,7 @@ void LcdSpiConfig( void )
 
 	/* Enable LCD_SPI_SCK_GPIO_CLK, LCD_SPI_MISO_GPIO_CLK and LCD_SPI_MOSI_GPIO_CLK clock */
 	RCC_AHB1PeriphClockCmd(
-	LCD_SPI_SCK_GPIO_CLK | LCD_SPI_MISO_GPIO_CLK | LCD_SPI_MOSI_GPIO_CLK,
-			ENABLE );
+	LCD_SPI_SCK_GPIO_CLK | LCD_SPI_MISO_GPIO_CLK | LCD_SPI_MOSI_GPIO_CLK, ENABLE );
 
 	/* Enable LCD_SPI and SYSCFG clock  */
 	RCC_APB2PeriphClockCmd( LCD_SPI_CLK, ENABLE );
@@ -1861,9 +1789,8 @@ static void LcdGpioAfConfig( void )
 
 	/* Enable GPIOA, GPIOB, GPIOC, GPIOD, GPIOF, GPIOG AHB Clocks */
 	RCC_AHB1PeriphClockCmd(
-			RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOC
-					| RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_GPIOF
-					| RCC_AHB1Periph_GPIOG, ENABLE );
+			RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD
+					| RCC_AHB1Periph_GPIOF | RCC_AHB1Periph_GPIOG, ENABLE );
 
 	/* GPIOs Configuration */
 	/*
@@ -1890,8 +1817,7 @@ static void LcdGpioAfConfig( void )
 	GPIO_PinAFConfig( GPIOA, GPIO_PinSource11, GPIO_AF_LTDC );
 	GPIO_PinAFConfig( GPIOA, GPIO_PinSource12, GPIO_AF_LTDC );
 
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_6
-			| GPIO_Pin_11 | GPIO_Pin_12;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_6 | GPIO_Pin_11 | GPIO_Pin_12;
 
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;
@@ -1907,8 +1833,7 @@ static void LcdGpioAfConfig( void )
 	GPIO_PinAFConfig( GPIOB, GPIO_PinSource10, GPIO_AF_LTDC );
 	GPIO_PinAFConfig( GPIOB, GPIO_PinSource11, GPIO_AF_LTDC );
 
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_8 | GPIO_Pin_9
-			| GPIO_Pin_10 | GPIO_Pin_11;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11;
 
 	GPIO_Init( GPIOB, &GPIO_InitStruct );
 
@@ -1943,8 +1868,7 @@ static void LcdGpioAfConfig( void )
 	GPIO_PinAFConfig( GPIOG, GPIO_PinSource11, GPIO_AF_LTDC );
 	GPIO_PinAFConfig( GPIOG, GPIO_PinSource12, 0x09 );
 
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_10
-			| GPIO_Pin_11 | GPIO_Pin_12;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
 
 	GPIO_Init( GPIOG, &GPIO_InitStruct );
 
@@ -1956,7 +1880,7 @@ static void LcdGpioAfConfig( void )
  * @param  y: pixel y.
  * @retval None
  */
-static void PutPixel( int16_t x, int16_t y )
+static void LcdPutPixel( int16_t x, int16_t y )
 {
 	if( x < 0 || x > 239 || y < 0 || y > 319 )
 	{
