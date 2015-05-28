@@ -33,28 +33,8 @@
  extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
-/** @addtogroup Utilities
-  * @{
-  */
-  
-/** @addtogroup STM32_EVAL
-  * @{
-  */ 
-
-/** @addtogroup Common
-  * @{
-  */
-
-/** @addtogroup FONTS
-  * @{
-  */ 
-
-/** @defgroup FONTS_Exported_Types
-  * @{
-  */ 
 typedef struct _tFont
 {    
   const uint16_t *table;
@@ -68,57 +48,8 @@ extern sFONT Font12x12;
 extern sFONT Font8x12;
 extern sFONT Font8x8;
 
-/**
-  * @}
-  */ 
-
-/** @defgroup FONTS_Exported_Constants
-  * @{
-  */ 
-#define LINE(x) ((x) * (((sFONT *)LCD_GetFont())->Height))
-
-/**
-  * @}
-  */ 
-
-/** @defgroup FONTS_Exported_Macros
-  * @{
-  */ 
-/**
-  * @}
-  */ 
-
-/** @defgroup FONTS_Exported_Functions
-  * @{
-  */ 
-/**
-  * @}
-  */
-
 #ifdef __cplusplus
 }
 #endif
   
 #endif /* __FONTS_H */
- 
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */ 
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */      
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

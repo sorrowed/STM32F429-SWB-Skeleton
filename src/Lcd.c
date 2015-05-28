@@ -321,7 +321,7 @@ void LcdLayerInit( void )
 	LTDC_ReloadConfig( LTDC_IMReload );
 
 	/* Set default font */
-	LCD_SetFont( &LCD_DEFAULT_FONT );
+	LcdSetFont( &LCD_DEFAULT_FONT );
 
 	/* dithering activation */
 	LTDC_DitherCmd( ENABLE );
@@ -414,7 +414,7 @@ void LcdSetBackColor( uint16_t Color )
  * @param  fonts: specifies the font to be used.
  * @retval None
  */
-void LCD_SetFont( sFONT *fonts )
+void LcdSetFont( sFONT *fonts )
 {
 	LCD_Currentfonts = fonts;
 }
@@ -443,7 +443,7 @@ void LcdSetTransparency( uint8_t transparency )
  * @param  None.
  * @retval the used font.
  */
-sFONT *LCD_GetFont( void )
+sFONT *LcdGetFont( void )
 {
 	return LCD_Currentfonts;
 }
@@ -466,7 +466,7 @@ void LcdClearLine( uint16_t Line )
 					>= LCD_Currentfonts->Width ) )
 	{
 		/* Display one character on LCD */
-		LCD_DisplayChar( Line, refcolumn, ' ' );
+		LcdDisplayChar( Line, refcolumn, ' ' );
 		/* Decrement the column position by 16 */
 		refcolumn += LCD_Currentfonts->Width;
 	}
@@ -494,7 +494,7 @@ void LcdClear( uint16_t Color )
  * @param  Ypos: specifies the Y position.
  * @retval Display Address
  */
-uint32_t LCD_SetCursor( uint16_t Xpos, uint16_t Ypos )
+uint32_t LcdSetCursor( uint16_t Xpos, uint16_t Ypos )
 {
 	return CurrentFrameBuffer + 2 * ( Xpos + ( LCD_PIXEL_WIDTH * Ypos ) );
 }
@@ -504,7 +504,7 @@ uint32_t LCD_SetCursor( uint16_t Xpos, uint16_t Ypos )
  * @param  RGBValue: Specifies the Color reference.
  * @retval None
  */
-void LCD_SetColorKeying( uint32_t RGBValue )
+void LcdSetColorKeying( uint32_t RGBValue )
 {
 	LTDC_ColorKeying_InitTypeDef LTDC_colorkeying_InitStruct;
 
@@ -536,7 +536,7 @@ void LCD_SetColorKeying( uint32_t RGBValue )
  * @param  RGBValue: Specifies the Color reference.
  * @retval None
  */
-void LCD_ReSetColorKeying( void )
+void LcdReSetColorKeying( void )
 {
 	LTDC_ColorKeying_InitTypeDef LTDC_colorkeying_InitStruct;
 
@@ -563,7 +563,7 @@ void LCD_ReSetColorKeying( void )
  * @param  c: pointer to the character data.
  * @retval None
  */
-void LCD_DrawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c )
+void LcdDrawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c )
 {
 	uint32_t index = 0, counter = 0, xpos = 0;
 	uint32_t Xaddress = 0;
@@ -609,11 +609,11 @@ void LCD_DrawChar( uint16_t Xpos, uint16_t Ypos, const uint16_t *c )
  * @param  Ascii: character ascii code, must be between 0x20 and 0x7E.
  * @retval None
  */
-void LCD_DisplayChar( uint16_t Line, uint16_t Column, uint8_t Ascii )
+void LcdDisplayChar( uint16_t Line, uint16_t Column, uint8_t Ascii )
 {
 	Ascii -= 32;
 
-	LCD_DrawChar( Line, Column,
+	LcdDrawChar( Line, Column,
 			&LCD_Currentfonts->table[Ascii * LCD_Currentfonts->Height] );
 }
 
@@ -635,7 +635,7 @@ void LcdDisplayString( uint16_t Line, char *ptr )
 							>= LCD_Currentfonts->Width ) ) )
 	{
 		/* Display one character on LCD */
-		LCD_DisplayChar( Line, refcolumn, *ptr );
+		LcdDisplayChar( Line, refcolumn, *ptr );
 		/* Decrement the column position by width */
 		refcolumn += LCD_Currentfonts->Width;
 		/* Point on the next character */
@@ -651,7 +651,7 @@ void LcdDisplayString( uint16_t Line, char *ptr )
  * @param  Width: display window width, can be a value from 0 to 240.
  * @retval None
  */
-void LCD_SetDisplayWindow( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
+void LcdSetDisplayWindow( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
 		uint16_t Width )
 {
 
@@ -682,9 +682,9 @@ void LCD_SetDisplayWindow( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
  * @param  None
  * @retval None
  */
-void LCD_WindowModeDisable( void )
+void LcdWindowModeDisable( void )
 {
-	LCD_SetDisplayWindow( 0, 0, LCD_PIXEL_HEIGHT, LCD_PIXEL_WIDTH );
+	LcdSetDisplayWindow( 0, 0, LCD_PIXEL_HEIGHT, LCD_PIXEL_WIDTH );
 }
 
 /**
@@ -696,7 +696,7 @@ void LCD_WindowModeDisable( void )
  *   This parameter can be one of the following values: LCD_DIR_HORIZONTAL or LCD_DIR_VERTICAL.
  * @retval None
  */
-void LCD_DrawLine( uint16_t Xpos, uint16_t Ypos, uint16_t Length,
+void LcdDrawLine( uint16_t Xpos, uint16_t Ypos, uint16_t Length,
 		uint8_t Direction )
 {
 	DMA2D_InitTypeDef DMA2D_InitStruct;
@@ -751,16 +751,16 @@ void LCD_DrawLine( uint16_t Xpos, uint16_t Ypos, uint16_t Length,
  * @param  Width: display rectangle width, can be a value from 0 to 240.
  * @retval None
  */
-void LCD_DrawRect( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
+void LcdDrawRect( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
 		uint16_t Width )
 {
 	/* draw horizontal lines */
-	LCD_DrawLine( Xpos, Ypos, Width, LCD_DIR_HORIZONTAL );
-	LCD_DrawLine( Xpos, ( Ypos + Height ), Width, LCD_DIR_HORIZONTAL );
+	LcdDrawLine( Xpos, Ypos, Width, LCD_DIR_HORIZONTAL );
+	LcdDrawLine( Xpos, ( Ypos + Height ), Width, LCD_DIR_HORIZONTAL );
 
 	/* draw vertical lines */
-	LCD_DrawLine( Xpos, Ypos, Height, LCD_DIR_VERTICAL );
-	LCD_DrawLine( ( Xpos + Width ), Ypos, Height, LCD_DIR_VERTICAL );
+	LcdDrawLine( Xpos, Ypos, Height, LCD_DIR_VERTICAL );
+	LcdDrawLine( ( Xpos + Width ), Ypos, Height, LCD_DIR_VERTICAL );
 }
 
 /**
@@ -770,7 +770,7 @@ void LCD_DrawRect( uint16_t Xpos, uint16_t Ypos, uint16_t Height,
  * @param  Radius: radius of the circle.
  * @retval None
  */
-void LCD_DrawCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
+void LcdDrawCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
 {
 	int x = -Radius, y = 0, err = 2 - 2 * Radius, e2;
 	do
@@ -808,7 +808,7 @@ void LCD_DrawCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
  * @param  Radius2: major radius of ellipse.
  * @retval None
  */
-void LCD_DrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
+void LcdDrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 {
 	int x = -Radius, y = 0, err = 2 - 2 * Radius, e2;
 	float K = 0, rad1 = 0, rad2 = 0;
@@ -821,9 +821,9 @@ void LCD_DrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 		do
 		{
 			K = (float) ( rad1 / rad2 );
-			LCD_DrawLine( ( Xpos + x ), ( Ypos - (uint16_t) ( y / K ) ),
+			LcdDrawLine( ( Xpos + x ), ( Ypos - (uint16_t) ( y / K ) ),
 					( 2 * (uint16_t) ( y / K ) + 1 ), LCD_DIR_VERTICAL );
-			LCD_DrawLine( ( Xpos - x ), ( Ypos - (uint16_t) ( y / K ) ),
+			LcdDrawLine( ( Xpos - x ), ( Ypos - (uint16_t) ( y / K ) ),
 					( 2 * (uint16_t) ( y / K ) + 1 ), LCD_DIR_VERTICAL );
 
 			e2 = err;
@@ -845,9 +845,9 @@ void LCD_DrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 		do
 		{
 			K = (float) ( rad2 / rad1 );
-			LCD_DrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos + y ),
+			LcdDrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos + y ),
 					( 2 * (uint16_t) ( x / K ) + 1 ), LCD_DIR_HORIZONTAL );
-			LCD_DrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos - y ),
+			LcdDrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos - y ),
 					( 2 * (uint16_t) ( x / K ) + 1 ), LCD_DIR_HORIZONTAL );
 
 			e2 = err;
@@ -871,7 +871,7 @@ void LCD_DrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
  * @param  Radius2: specifies Radius2.
  * @retval None
  */
-void LCD_DrawEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
+void LcdDrawEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 {
 	int x = -Radius, y = 0, err = 2 - 2 * Radius, e2;
 	float K = 0, rad1 = 0, rad2 = 0;
@@ -966,7 +966,7 @@ void LCD_DrawEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
  * @param  Pict: pointer to the picture array.
  * @retval None
  */
-void LCD_DrawMonoPict( const uint32_t *Pict )
+void LcdDrawMonoPict( const uint32_t *Pict )
 {
 	uint32_t index = 0, counter = 0;
 
@@ -991,7 +991,7 @@ void LCD_DrawMonoPict( const uint32_t *Pict )
  * @param  BmpAddress: Bmp picture address in the internal Flash.
  * @retval None
  */
-void LCD_WriteBMP( uint32_t BmpAddress )
+void LcdWriteBMP( uint32_t BmpAddress )
 {
 	uint32_t index = 0, size = 0, width = 0, height = 0, bit_pixel = 0;
 	uint32_t Address;
@@ -1103,7 +1103,7 @@ void LCD_WriteBMP( uint32_t BmpAddress )
  * @param  Width: rectangle width.
  * @retval None
  */
-void LCD_DrawFullRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width,
+void LcdDrawFullRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width,
 		uint16_t Height )
 {
 	DMA2D_InitTypeDef DMA2D_InitStruct;
@@ -1149,7 +1149,7 @@ void LCD_DrawFullRect( uint16_t Xpos, uint16_t Ypos, uint16_t Width,
  * @param  Radius
  * @retval None
  */
-void LCD_DrawFullCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
+void LcdDrawFullCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
 {
 	int32_t D; /* Decision Variable */
 	uint32_t CurX;/* Current X Value */
@@ -1164,17 +1164,17 @@ void LCD_DrawFullCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
 	{
 		if( CurY > 0 )
 		{
-			LCD_DrawLine( Xpos - CurX, Ypos - CurY, 2 * CurY,
+			LcdDrawLine( Xpos - CurX, Ypos - CurY, 2 * CurY,
 			LCD_DIR_VERTICAL );
-			LCD_DrawLine( Xpos + CurX, Ypos - CurY, 2 * CurY,
+			LcdDrawLine( Xpos + CurX, Ypos - CurY, 2 * CurY,
 			LCD_DIR_VERTICAL );
 		}
 
 		if( CurX > 0 )
 		{
-			LCD_DrawLine( Xpos - CurY, Ypos - CurX, 2 * CurX,
+			LcdDrawLine( Xpos - CurY, Ypos - CurX, 2 * CurX,
 			LCD_DIR_VERTICAL );
-			LCD_DrawLine( Xpos + CurY, Ypos - CurX, 2 * CurX,
+			LcdDrawLine( Xpos + CurY, Ypos - CurX, 2 * CurX,
 			LCD_DIR_VERTICAL );
 		}
 		if( D < 0 )
@@ -1189,7 +1189,7 @@ void LCD_DrawFullCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
 		CurX++;
 	}
 
-	LCD_DrawCircle( Xpos, Ypos, Radius );
+	LcdDrawCircle( Xpos, Ypos, Radius );
 }
 
 /**
@@ -1200,7 +1200,7 @@ void LCD_DrawFullCircle( uint16_t Xpos, uint16_t Ypos, uint16_t Radius )
  * @param  y2: specifies the point 2 y position.
  * @retval None
  */
-void LCD_DrawUniLine( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2 )
+void LcdDrawUniLine( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2 )
 {
 	int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, yinc1 =
 			0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0,
@@ -1272,7 +1272,7 @@ void LCD_DrawUniLine( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2 )
  * @param  Points: pointer to the points array.
  * @retval None
  */
-void LCD_Triangle( pPoint Points, uint16_t PointCount )
+void LcdTriangle( pPoint Points, uint16_t PointCount )
 {
 	int16_t X = 0, Y = 0;
 	pPoint First = Points;
@@ -1287,9 +1287,9 @@ void LCD_Triangle( pPoint Points, uint16_t PointCount )
 		X = Points->X;
 		Y = Points->Y;
 		Points++;
-		LCD_DrawUniLine( X, Y, Points->X, Points->Y );
+		LcdDrawUniLine( X, Y, Points->X, Points->Y );
 	}
-	LCD_DrawUniLine( First->X, First->Y, Points->X, Points->Y );
+	LcdDrawUniLine( First->X, First->Y, Points->X, Points->Y );
 }
 
 /**
@@ -1298,7 +1298,7 @@ void LCD_Triangle( pPoint Points, uint16_t PointCount )
  * @param  y1..3: y position of triangle point 1..3.
  * @retval None
  */
-void LCD_FillTriangle( uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1,
+void LcdFillTriangle( uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1,
 		uint16_t y2, uint16_t y3 )
 {
 
@@ -1354,7 +1354,7 @@ void LCD_FillTriangle( uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1,
 
 	for( curpixel = 0; curpixel <= numpixels; curpixel++ )
 	{
-		LCD_DrawUniLine( x, y, x3, y3 );
+		LcdDrawUniLine( x, y, x3, y3 );
 
 		num += numadd; /* Increase the numerator by the top of the fraction */
 		if( num >= den ) /* Check if numerator >= denominator */
@@ -1374,7 +1374,7 @@ void LCD_FillTriangle( uint16_t x1, uint16_t x2, uint16_t x3, uint16_t y1,
  * @param  PointCount: Number of points.
  * @retval None
  */
-void LCD_PolyLine( pPoint Points, uint16_t PointCount )
+void LcdPolyLine( pPoint Points, uint16_t PointCount )
 {
 	int16_t X = 0, Y = 0;
 
@@ -1388,7 +1388,7 @@ void LCD_PolyLine( pPoint Points, uint16_t PointCount )
 		X = Points->X;
 		Y = Points->Y;
 		Points++;
-		LCD_DrawUniLine( X, Y, Points->X, Points->Y );
+		LcdDrawUniLine( X, Y, Points->X, Points->Y );
 	}
 }
 
@@ -1415,13 +1415,13 @@ static void LCD_PolyLineRelativeClosed( pPoint Points, uint16_t PointCount,
 	while( --PointCount )
 	{
 		Points++;
-		LCD_DrawUniLine( X, Y, X + Points->X, Y + Points->Y );
+		LcdDrawUniLine( X, Y, X + Points->X, Y + Points->Y );
 		X = X + Points->X;
 		Y = Y + Points->Y;
 	}
 	if( Closed )
 	{
-		LCD_DrawUniLine( First->X, First->Y, X, Y );
+		LcdDrawUniLine( First->X, First->Y, X, Y );
 	}
 }
 
@@ -1431,10 +1431,10 @@ static void LCD_PolyLineRelativeClosed( pPoint Points, uint16_t PointCount,
  * @param  PointCount: Number of points.
  * @retval None
  */
-void LCD_ClosedPolyLine( pPoint Points, uint16_t PointCount )
+void LcdClosedPolyLine( pPoint Points, uint16_t PointCount )
 {
-	LCD_PolyLine( Points, PointCount );
-	LCD_DrawUniLine( Points->X, Points->Y, ( Points + PointCount - 1 )->X,
+	LcdPolyLine( Points, PointCount );
+	LcdDrawUniLine( Points->X, Points->Y, ( Points + PointCount - 1 )->X,
 			( Points + PointCount - 1 )->Y );
 }
 
@@ -1444,7 +1444,7 @@ void LCD_ClosedPolyLine( pPoint Points, uint16_t PointCount )
  * @param  PointCount: Number of points.
  * @retval None
  */
-void LCD_PolyLineRelative( pPoint Points, uint16_t PointCount )
+void LcdPolyLineRelative( pPoint Points, uint16_t PointCount )
 {
 	LCD_PolyLineRelativeClosed( Points, PointCount, 0 );
 }
@@ -1455,7 +1455,7 @@ void LCD_PolyLineRelative( pPoint Points, uint16_t PointCount )
  * @param  PointCount: Number of points.
  * @retval None
  */
-void LCD_ClosedPolyLineRelative( pPoint Points, uint16_t PointCount )
+void LcdClosedPolyLineRelative( pPoint Points, uint16_t PointCount )
 {
 	LCD_PolyLineRelativeClosed( Points, PointCount, 1 );
 }
@@ -1466,7 +1466,7 @@ void LCD_ClosedPolyLineRelative( pPoint Points, uint16_t PointCount )
  * @param  PointCount: Number of points.
  * @retval None
  */
-void LCD_FillPolyLine( pPoint Points, uint16_t PointCount )
+void LcdFillPolyLine( pPoint Points, uint16_t PointCount )
 {
 
 	int16_t X = 0, Y = 0, X2 = 0, Y2 = 0, X_center = 0, Y_center = 0, X_first =
@@ -1518,14 +1518,14 @@ void LCD_FillPolyLine( pPoint Points, uint16_t PointCount )
 		X2 = Points->X;
 		Y2 = Points->Y;
 
-		LCD_FillTriangle( X, X2, X_center, Y, Y2, Y_center );
-		LCD_FillTriangle( X, X_center, X2, Y, Y_center, Y2 );
-		LCD_FillTriangle( X_center, X2, X, Y_center, Y2, Y );
+		LcdFillTriangle( X, X2, X_center, Y, Y2, Y_center );
+		LcdFillTriangle( X, X_center, X2, Y, Y_center, Y2 );
+		LcdFillTriangle( X_center, X2, X, Y_center, Y2, Y );
 	}
 
-	LCD_FillTriangle( X_first, X2, X_center, Y_first, Y2, Y_center );
-	LCD_FillTriangle( X_first, X_center, X2, Y_first, Y_center, Y2 );
-	LCD_FillTriangle( X_center, X2, X_first, Y_center, Y2, Y_first );
+	LcdFillTriangle( X_first, X2, X_center, Y_first, Y2, Y_center );
+	LcdFillTriangle( X_first, X_center, X2, Y_first, Y_center, Y2 );
+	LcdFillTriangle( X_center, X2, X_first, Y_center, Y2, Y_first );
 }
 
 /**
@@ -1533,7 +1533,7 @@ void LCD_FillPolyLine( pPoint Points, uint16_t PointCount )
  * @param  LCD_Reg: address of the selected register.
  * @retval None
  */
-void LCD_WriteCommand( uint8_t LCD_Reg )
+void LcdWriteCommand( uint8_t LCD_Reg )
 {
 	/* Reset WRX to send command */
 	LcdCtrlLinesWrite( LCD_WRX_GPIO_PORT, LCD_WRX_PIN, Bit_RESET );
@@ -1559,7 +1559,7 @@ void LCD_WriteCommand( uint8_t LCD_Reg )
  * @param  value: data to write to the selected register.
  * @retval None
  */
-void LCD_WriteData( uint8_t value )
+void LcdWriteData( uint8_t value )
 {
 	/* Set WRX to send data */
 	LcdCtrlLinesWrite( LCD_WRX_GPIO_PORT, LCD_WRX_PIN, Bit_SET );
@@ -1586,122 +1586,122 @@ void LCD_WriteData( uint8_t value )
  */
 void LcdPowerOn( void )
 {
-	LCD_WriteCommand( 0xCA );
-	LCD_WriteData( 0xC3 );
-	LCD_WriteData( 0x08 );
-	LCD_WriteData( 0x50 );
-	LCD_WriteCommand( LCD_POWERB );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0xC1 );
-	LCD_WriteData( 0x30 );
-	LCD_WriteCommand( LCD_POWER_SEQ );
-	LCD_WriteData( 0x64 );
-	LCD_WriteData( 0x03 );
-	LCD_WriteData( 0x12 );
-	LCD_WriteData( 0x81 );
-	LCD_WriteCommand( LCD_DTCA );
-	LCD_WriteData( 0x85 );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x78 );
-	LCD_WriteCommand( LCD_POWERA );
-	LCD_WriteData( 0x39 );
-	LCD_WriteData( 0x2C );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x34 );
-	LCD_WriteData( 0x02 );
-	LCD_WriteCommand( LCD_PRC );
-	LCD_WriteData( 0x20 );
-	LCD_WriteCommand( LCD_DTCB );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x00 );
-	LCD_WriteCommand( LCD_FRC );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x1B );
-	LCD_WriteCommand( LCD_DFC );
-	LCD_WriteData( 0x0A );
-	LCD_WriteData( 0xA2 );
-	LCD_WriteCommand( LCD_POWER1 );
-	LCD_WriteData( 0x10 );
-	LCD_WriteCommand( LCD_POWER2 );
-	LCD_WriteData( 0x10 );
-	LCD_WriteCommand( LCD_VCOM1 );
-	LCD_WriteData( 0x45 );
-	LCD_WriteData( 0x15 );
-	LCD_WriteCommand( LCD_VCOM2 );
-	LCD_WriteData( 0x90 );
-	LCD_WriteCommand( LCD_MAC );
-	LCD_WriteData( 0xC8 );
-	LCD_WriteCommand( LCD_3GAMMA_EN );
-	LCD_WriteData( 0x00 );
-	LCD_WriteCommand( LCD_RGB_INTERFACE );
-	LCD_WriteData( 0xC2 );
-	LCD_WriteCommand( LCD_DFC );
-	LCD_WriteData( 0x0A );
-	LCD_WriteData( 0xA7 );
-	LCD_WriteData( 0x27 );
-	LCD_WriteData( 0x04 );
+	LcdWriteCommand( 0xCA );
+	LcdWriteData( 0xC3 );
+	LcdWriteData( 0x08 );
+	LcdWriteData( 0x50 );
+	LcdWriteCommand( LCD_POWERB );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0xC1 );
+	LcdWriteData( 0x30 );
+	LcdWriteCommand( LCD_POWER_SEQ );
+	LcdWriteData( 0x64 );
+	LcdWriteData( 0x03 );
+	LcdWriteData( 0x12 );
+	LcdWriteData( 0x81 );
+	LcdWriteCommand( LCD_DTCA );
+	LcdWriteData( 0x85 );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x78 );
+	LcdWriteCommand( LCD_POWERA );
+	LcdWriteData( 0x39 );
+	LcdWriteData( 0x2C );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x34 );
+	LcdWriteData( 0x02 );
+	LcdWriteCommand( LCD_PRC );
+	LcdWriteData( 0x20 );
+	LcdWriteCommand( LCD_DTCB );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x00 );
+	LcdWriteCommand( LCD_FRC );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x1B );
+	LcdWriteCommand( LCD_DFC );
+	LcdWriteData( 0x0A );
+	LcdWriteData( 0xA2 );
+	LcdWriteCommand( LCD_POWER1 );
+	LcdWriteData( 0x10 );
+	LcdWriteCommand( LCD_POWER2 );
+	LcdWriteData( 0x10 );
+	LcdWriteCommand( LCD_VCOM1 );
+	LcdWriteData( 0x45 );
+	LcdWriteData( 0x15 );
+	LcdWriteCommand( LCD_VCOM2 );
+	LcdWriteData( 0x90 );
+	LcdWriteCommand( LCD_MAC );
+	LcdWriteData( 0xC8 );
+	LcdWriteCommand( LCD_3GAMMA_EN );
+	LcdWriteData( 0x00 );
+	LcdWriteCommand( LCD_RGB_INTERFACE );
+	LcdWriteData( 0xC2 );
+	LcdWriteCommand( LCD_DFC );
+	LcdWriteData( 0x0A );
+	LcdWriteData( 0xA7 );
+	LcdWriteData( 0x27 );
+	LcdWriteData( 0x04 );
 
 	/* colomn address set */
-	LCD_WriteCommand( LCD_COLUMN_ADDR );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0xEF );
+	LcdWriteCommand( LCD_COLUMN_ADDR );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0xEF );
 	/* Page Address Set */
-	LCD_WriteCommand( LCD_PAGE_ADDR );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x01 );
-	LCD_WriteData( 0x3F );
-	LCD_WriteCommand( LCD_INTERFACE );
-	LCD_WriteData( 0x01 );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x06 );
+	LcdWriteCommand( LCD_PAGE_ADDR );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x01 );
+	LcdWriteData( 0x3F );
+	LcdWriteCommand( LCD_INTERFACE );
+	LcdWriteData( 0x01 );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x06 );
 
-	LCD_WriteCommand( LCD_GRAM );
+	LcdWriteCommand( LCD_GRAM );
 	delay( 200 );
 
-	LCD_WriteCommand( LCD_GAMMA );
-	LCD_WriteData( 0x01 );
+	LcdWriteCommand( LCD_GAMMA );
+	LcdWriteData( 0x01 );
 
-	LCD_WriteCommand( LCD_PGAMMA );
-	LCD_WriteData( 0x0F );
-	LCD_WriteData( 0x29 );
-	LCD_WriteData( 0x24 );
-	LCD_WriteData( 0x0C );
-	LCD_WriteData( 0x0E );
-	LCD_WriteData( 0x09 );
-	LCD_WriteData( 0x4E );
-	LCD_WriteData( 0x78 );
-	LCD_WriteData( 0x3C );
-	LCD_WriteData( 0x09 );
-	LCD_WriteData( 0x13 );
-	LCD_WriteData( 0x05 );
-	LCD_WriteData( 0x17 );
-	LCD_WriteData( 0x11 );
-	LCD_WriteData( 0x00 );
-	LCD_WriteCommand( LCD_NGAMMA );
-	LCD_WriteData( 0x00 );
-	LCD_WriteData( 0x16 );
-	LCD_WriteData( 0x1B );
-	LCD_WriteData( 0x04 );
-	LCD_WriteData( 0x11 );
-	LCD_WriteData( 0x07 );
-	LCD_WriteData( 0x31 );
-	LCD_WriteData( 0x33 );
-	LCD_WriteData( 0x42 );
-	LCD_WriteData( 0x05 );
-	LCD_WriteData( 0x0C );
-	LCD_WriteData( 0x0A );
-	LCD_WriteData( 0x28 );
-	LCD_WriteData( 0x2F );
-	LCD_WriteData( 0x0F );
+	LcdWriteCommand( LCD_PGAMMA );
+	LcdWriteData( 0x0F );
+	LcdWriteData( 0x29 );
+	LcdWriteData( 0x24 );
+	LcdWriteData( 0x0C );
+	LcdWriteData( 0x0E );
+	LcdWriteData( 0x09 );
+	LcdWriteData( 0x4E );
+	LcdWriteData( 0x78 );
+	LcdWriteData( 0x3C );
+	LcdWriteData( 0x09 );
+	LcdWriteData( 0x13 );
+	LcdWriteData( 0x05 );
+	LcdWriteData( 0x17 );
+	LcdWriteData( 0x11 );
+	LcdWriteData( 0x00 );
+	LcdWriteCommand( LCD_NGAMMA );
+	LcdWriteData( 0x00 );
+	LcdWriteData( 0x16 );
+	LcdWriteData( 0x1B );
+	LcdWriteData( 0x04 );
+	LcdWriteData( 0x11 );
+	LcdWriteData( 0x07 );
+	LcdWriteData( 0x31 );
+	LcdWriteData( 0x33 );
+	LcdWriteData( 0x42 );
+	LcdWriteData( 0x05 );
+	LcdWriteData( 0x0C );
+	LcdWriteData( 0x0A );
+	LcdWriteData( 0x28 );
+	LcdWriteData( 0x2F );
+	LcdWriteData( 0x0F );
 
-	LCD_WriteCommand( LCD_SLEEP_OUT );
+	LcdWriteCommand( LCD_SLEEP_OUT );
 	delay( 200 );
-	LCD_WriteCommand( LCD_DISPLAY_ON );
+	LcdWriteCommand( LCD_DISPLAY_ON );
 	/* GRAM start writing */
-	LCD_WriteCommand( LCD_GRAM );
+	LcdWriteCommand( LCD_GRAM );
 }
 
 /**
@@ -1711,7 +1711,7 @@ void LcdPowerOn( void )
  */
 void LcdDisplayOn( void )
 {
-	LCD_WriteCommand( LCD_DISPLAY_ON );
+	LcdWriteCommand( LCD_DISPLAY_ON );
 }
 
 /**
@@ -1722,7 +1722,7 @@ void LcdDisplayOn( void )
 void LcdDisplayOff( void )
 {
 	/* Display Off */
-	LCD_WriteCommand( LCD_DISPLAY_OFF );
+	LcdWriteCommand( LCD_DISPLAY_OFF );
 }
 
 /**
@@ -1962,7 +1962,7 @@ static void PutPixel( int16_t x, int16_t y )
 	{
 		return;
 	}
-	LCD_DrawLine( x, y, 1, LCD_DIR_HORIZONTAL );
+	LcdDrawLine( x, y, 1, LCD_DIR_HORIZONTAL );
 }
 
 #ifndef USE_Delay

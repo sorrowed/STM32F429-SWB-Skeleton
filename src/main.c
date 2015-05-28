@@ -16,18 +16,60 @@
 #include "SdRam.h"
 #include "Lcd.h"
 
+typedef struct
+{
+	int seconds;
+	int minutes;
+	int hours;
+} RunningTimer_t;
+
+static RunningTimer_t RunningTimer;
+
 static xTaskHandle TskMainHandle;
 static xTaskHandle TskBlinkHandle;
 static xTaskHandle TskSdRamHandle;
+static xTaskHandle TskLcdHandle;
 
 static void TskMain( void * parms );
 static void TskBlink( void * parms );
 static void TskSdRam( void * parms );
+static void TskLcd( void * parms );
+
+static void RunningTimerRun( RunningTimer_t* timer );
+static void OutputTime( const Point* position );
 
 int main( void )
 {
 	LedInit();
-	SdRamInit();
+
+	xTaskCreate( TskMain, TskMainDesc, TskMainStack, NULL, TskMainPrio,
+			&TskMainHandle );
+	xTaskCreate( TskBlink, TskBlinkDesc, TskBlinkStack, NULL, TskBlinkPrio,
+			&TskBlinkHandle );
+	xTaskCreate( TskSdRam, TskSdRamDesc, TskSdRamStack, NULL, TskSdRamPrio,
+			&TskSdRamHandle );
+	xTaskCreate( TskLcd, TskLcdDesc, TskLcdStack, NULL, TskLcdPrio,
+			&TskLcdHandle );
+
+	vTaskStartScheduler();
+
+	return -1;
+}
+
+void TskMain( void * parms )
+{
+	while( true )
+	{
+		vTaskDelay( 1000 / portTICK_RATE_MS );
+
+		RunningTimerRun( &RunningTimer );
+	}
+}
+
+void TskLcd( void* parms )
+{
+	Point position =
+	{ 0, 0 };
 
 	LcdInit();
 
@@ -36,78 +78,38 @@ int main( void )
 	LcdSetBackColor( LCD_COLOR_BLUE );
 	LcdSetTextColor( LCD_COLOR_WHITE );
 
-	xTaskCreate( TskMain, TskMainDesc, TskMainStack, NULL, TskMainPrio,
-			&TskMainHandle );
-	xTaskCreate( TskBlink, TskBlinkDesc, TskBlinkStack, NULL, TskBlinkPrio,
-			&TskBlinkHandle );
-	xTaskCreate( TskSdRam, TskSdRamDesc, TskSdRamStack, NULL, TskSdRamPrio,
-			&TskSdRamHandle );
-
-	vTaskStartScheduler();
-
-	return -1;
-}
-
-void AlignCenter( char* buffer, int maxlen, const char* string )
-{
-	int len = strlen( string );
-	if( len > maxlen )
-		len = maxlen;
-
-	int margin = ( maxlen - len ) / 2;
-
-	memset( buffer, ' ', margin );
-	strncpy( buffer + margin, string, len );
-	memset( buffer + margin + len, ' ', margin );
-}
-
-void TskMain( void * parms )
-{
-	int seconds = 0;
-	int minutes = 0;
-	int hours = 0;
+	int change = 0;
 
 	while( true )
 	{
 		vTaskDelay( 1000 / portTICK_RATE_MS );
 
-		++seconds;
-		if( seconds >= 60 )
+		if( change % 10 == 0 )
 		{
-			++minutes;
-			seconds = 0;
+			position.Y = ( (float) RNG_GetRandomNumber() / 0xFFFFFFFF ) * 13;
+			position.X = ( (float) RNG_GetRandomNumber() / 0xFFFFFFFF ) * 8;
 		}
+		++change;
 
-		if( minutes >= 60 )
-		{
-			++hours;
-			minutes = 0;
-		}
-
-		char buffer[17] = { 0 };
-		snprintf( buffer, 16, "%02i:%02i:%02i", hours, minutes, seconds );
-
-		char buffer2[17] = { 0 };
-		AlignCenter( buffer2, 16, buffer );
-
-		LcdDisplayString( LCD_LINE_0, buffer2 );
-
+		OutputTime( &position );
 	}
 }
-
-static uint32_t buffer[1025];
 
 /*
  * This writes into the framebuffer for the LCD background layer i guess
  */
 void TskSdRam( void * parms )
 {
+	SdRamInit();
+
 	RCC_AHB2PeriphClockCmd( RCC_AHB2Periph_RNG, ENABLE );
 	RCC_AHB1PeriphClockCmd( RCC_AHB1Periph_CRC, ENABLE );
 	RNG_Cmd( ENABLE );
 
 	while( true )
 	{
+		static uint32_t buffer[1025];
+
 		vTaskDelay( 250 / portTICK_RATE_MS );
 
 		for( int i = 0; i < 1024; ++i )
@@ -147,6 +149,39 @@ void TskBlink( void * parms )
 	{
 		vTaskDelay( 500 / portTICK_RATE_MS );
 		LedToggle( LED3 );
+	}
+}
+
+void OutputTime( const Point* position )
+{
+	static Point p = { 0, 0 };
+
+	char buffer[17] = { 0 };
+
+	memset( buffer, ' ', position->X );
+
+	snprintf( buffer + position->X, 16-position->X, "%02i:%02i:%02i", RunningTimer.hours,
+			RunningTimer.minutes, RunningTimer.seconds );
+
+	if( p.X != position->X || p.Y != position->Y )
+		LcdClearLine( LCD_LINE( p.Y ) );
+	p = *position;
+
+	LcdDisplayString( LCD_LINE( p.Y ), buffer );
+}
+
+void RunningTimerRun( RunningTimer_t* timer )
+{
+	++timer->seconds;
+	if( timer->seconds >= 60 )
+	{
+		++timer->minutes;
+		timer->seconds = 0;
+	}
+	if( timer->minutes >= 60 )
+	{
+		++timer->hours;
+		timer->minutes = 0;
 	}
 }
 
