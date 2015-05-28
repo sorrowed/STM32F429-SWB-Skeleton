@@ -25,6 +25,9 @@
 #include "stm32f4xx_fmc.h"
 #include "stm32f4xx_rng.h"
 #include "stm32f4xx_crc.h"
+#include "stm32f4xx_spi.h"
+#include "stm32f4xx_ltdc.h"
+#include "stm32f4xx_dma2d.h"
 
 #define assert_param(a)
 
