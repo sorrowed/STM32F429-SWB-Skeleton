@@ -286,8 +286,7 @@ void LcdLayerInit( void )
 
 	/* Configure Layer2 */
 	/* Start Address configuration : the LCD Frame buffer is defined on SDRAM w/ Offset */
-	LtdcLayerCfg.LTDC_CFBStartAdress =
-	LCD_FRAME_BUFFER + BUFFER_OFFSET;
+	LtdcLayerCfg.LTDC_CFBStartAdress = LCD_FRAME_BUFFER + BUFFER_OFFSET;
 
 	/* Configure blending factors */
 	LtdcLayerCfg.LTDC_BlendingFactor_1 = LTDC_BlendingFactor1_PAxCA;
@@ -786,9 +785,9 @@ void LcdDrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 		{
 			K = (float) ( rad1 / rad2 );
 			LcdDrawLine( ( Xpos + x ), ( Ypos - (uint16_t) ( y / K ) ), ( 2 * (uint16_t) ( y / K ) + 1 ),
-					LCD_DIR_VERTICAL );
+			LCD_DIR_VERTICAL );
 			LcdDrawLine( ( Xpos - x ), ( Ypos - (uint16_t) ( y / K ) ), ( 2 * (uint16_t) ( y / K ) + 1 ),
-					LCD_DIR_VERTICAL );
+			LCD_DIR_VERTICAL );
 
 			e2 = err;
 			if( e2 <= y )
@@ -810,9 +809,9 @@ void LcdDrawFullEllipse( int Xpos, int Ypos, int Radius, int Radius2 )
 		{
 			K = (float) ( rad2 / rad1 );
 			LcdDrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos + y ), ( 2 * (uint16_t) ( x / K ) + 1 ),
-					LCD_DIR_HORIZONTAL );
+			LCD_DIR_HORIZONTAL );
 			LcdDrawLine( ( Xpos - (uint16_t) ( x / K ) ), ( Ypos - y ), ( 2 * (uint16_t) ( x / K ) + 1 ),
-					LCD_DIR_HORIZONTAL );
+			LCD_DIR_HORIZONTAL );
 
 			e2 = err;
 			if( e2 <= x )

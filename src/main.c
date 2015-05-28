@@ -82,7 +82,7 @@ void TskLcd( void* parms )
 		if( change % 2 == 0 )
 		{
 			position.Y = ( (float) RNG_GetRandomNumber() / 0xFFFFFFFF ) * 13;
-			position.X = ( (float) RNG_GetRandomNumber() / 0xFFFFFFFF ) * 5;
+			position.X = ( (float) RNG_GetRandomNumber() / 0xFFFFFFFF ) * 8;
 		}
 		++change;
 
@@ -158,14 +158,16 @@ void OutputTime( const Point* position )
 	snprintf( buffer + position->X, 16 - position->X, "%02i:%02i:%02i", RunningTimer.hours, RunningTimer.minutes,
 			RunningTimer.seconds );
 
+	LTDC_Cmd( DISABLE );
+
 	if( p.X != position->X || p.Y != position->Y )
 		LcdClearLine( LCD_LINE( p.Y ) );
 	p = *position;
 
-	snprintf( buffer + position->X, 16 - position->X, "%s", "Rob is lief" );
 
 	LcdDrawString( LCD_LINE( p.Y ), buffer );
 	LcdDrawRect( 0, 0, 240 - 1, 320 - 1 );
+	LTDC_Cmd( ENABLE );
 }
 
 void RunningTimerRun( RunningTimer_t* timer )
