@@ -11,7 +11,10 @@
 #undef HSE_VALUE
 #define HSE_VALUE	8
 
-/* Configure PLL values. To do this here i had to edit system_stm32f4xx.c too because these values are redefined there */
+/*
+ * Configure PLL values. To do this here i had to edit system_stm32f4xx.c too because these values are
+ * unconditionally redefined there.
+ */
 #define PLL_M		8
 #define PLL_N		336
 #define PLL_P		2

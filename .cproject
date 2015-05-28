@@ -88,6 +88,9 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="fr.ac6.managedbuild.config.gnu.cross.exe.debug.2132003252.1128299706" name="Led.c" rcbsApplicability="disable" resourcePath="src/Led.c" toolsToInvoke="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1712249704.2122775812">
+						<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1712249704.2122775812" name="MCU GCC Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1712249704"/>
+					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="CMSIS"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Config"/>

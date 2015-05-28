@@ -10,16 +10,26 @@
 #include "stdbool.h"
 #include "stdio.h"
 
-#define Main_Task_PRIO    (tskIDLE_PRIORITY + 1)
-#define Main_Task_STACK   (configMINIMAL_STACK_SIZE)
+#include "TaskConfig.h"
+#include "Led.h"
 
-static xTaskHandle Task_Handle;
-static void Main_Task( void * parms );
+static xTaskHandle		TskMainHandle;
+static xTaskHandle		TskBlinkHandle;
+
+static void TskMain( void * parms );
+static void TskBlinkGreen( void * parms );
+static void TskBlinkRed( void * parms );
 
 int main( void )
 {
-	xTaskCreate( Main_Task, (signed char const* )"Main", Main_Task_STACK, NULL,
-			Main_Task_PRIO, &Task_Handle );
+	LedInit();
+
+	xTaskCreate( TskMain, "Main", TskMainStack, NULL,
+			TskMainPrio, &TskMainHandle );
+	xTaskCreate( TskBlinkGreen, "BlinkGreen", TskBlinkStack, NULL,
+			TskBlinkPrio, &TskBlinkHandle );
+	xTaskCreate( TskBlinkRed, "BlinkRed", TskBlinkStack, NULL,
+			TskBlinkPrio, &TskBlinkHandle );
 
 	vTaskStartScheduler();
 
@@ -28,7 +38,7 @@ int main( void )
 
 volatile int seconds = 0;
 
-void Main_Task( void * parms )
+void TskMain( void * parms )
 {
 	while( true )
 	{
@@ -37,6 +47,24 @@ void Main_Task( void * parms )
 		++seconds;
 
 		printf( "%i\n", seconds );
+	}
+}
+
+void TskBlinkGreen( void * parms )
+{
+	while( true )
+	{
+		vTaskDelay( 500 / portTICK_RATE_MS );
+		LedToggle( LED3 );
+	}
+}
+
+void TskBlinkRed( void * parms )
+{
+	while( true )
+	{
+		vTaskDelay( 250 / portTICK_RATE_MS );
+		LedToggle( LED4 );
 	}
 }
 
