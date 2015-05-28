@@ -22,6 +22,9 @@
 
 #include "stm32f4xx_rcc.h"
 #include "stm32f4xx_gpio.h"
+#include "stm32f4xx_fmc.h"
+#include "stm32f4xx_rng.h"
+#include "stm32f4xx_crc.h"
 
 #define assert_param(a)
 
